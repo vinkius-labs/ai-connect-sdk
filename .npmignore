@@ -1,0 +1,24 @@
+# Source & config (dist/ is what ships)
+src/
+test/
+tsconfig.json
+tsup.config.ts
+vitest.config.ts
+eslint.config.mjs
+.prettierrc.json
+.editorconfig
+
+# Dev tooling
+.github/
+.kiro/
+.zcode/
+node_modules/
+
+# Misc
+*.log
+.env*
+.gitignore
+.npmrc
+.npm-placeholder/
+VINKIUS_CONNECT_SDK_DESIGN.md
+examples/

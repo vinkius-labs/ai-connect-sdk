@@ -1,0 +1,130 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - package.json
+
+permissions:
+  contents: write
+
+jobs:
+  maybe-release:
+    name: Check version · Tag · Publish
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read version from package.json
+        id: pkg
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Check if tag already exists
+        id: check
+        run: |
+          if git rev-parse "refs/tags/${{ steps.pkg.outputs.tag }}" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Tag ${{ steps.pkg.outputs.tag }} already exists. Skipping release."
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "Tag ${{ steps.pkg.outputs.tag }} does not exist. Will release."
+          fi
+
+      - name: Setup Node
+        if: steps.check.outputs.exists == 'false'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: https://registry.npmjs.org
+
+      - name: Install
+        if: steps.check.outputs.exists == 'false'
+        run: npm ci
+
+      - name: Typecheck
+        if: steps.check.outputs.exists == 'false'
+        run: npm run typecheck
+
+      - name: Build
+        if: steps.check.outputs.exists == 'false'
+        run: npm run build
+
+      - name: Test
+        if: steps.check.outputs.exists == 'false'
+        run: npm test
+
+      - name: Create git tag
+        if: steps.check.outputs.exists == 'false'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "${{ steps.pkg.outputs.tag }}" -m "Release ${{ steps.pkg.outputs.tag }}"
+          git push origin "${{ steps.pkg.outputs.tag }}"
+
+      - name: Create GitHub Release
+        if: steps.check.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ steps.pkg.outputs.tag }}" \
+            --repo "${{ github.repository }}" \
+            --title "${{ steps.pkg.outputs.tag }}" \
+            --notes-file CHANGELOG.md
+
+      - name: Publish to NPM
+        if: steps.check.outputs.exists == 'false'
+        run: npm publish --access public --tag latest
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Verify publication
+        if: steps.check.outputs.exists == 'false'
+        run: |
+          sleep 10
+          PUBLISHED=$(npm view @vinkius/connect version 2>/dev/null || echo "none")
+          EXPECTED="${{ steps.pkg.outputs.version }}"
+          if [ "$PUBLISHED" = "$EXPECTED" ]; then
+            echo "✓ @vinkius/connect@$PUBLISHED confirmed on NPM"
+          else
+            echo "::warning::Registry shows '$PUBLISHED', expected '$EXPECTED'. Propagation may take a moment."
+          fi
+
+      - name: Notify Discord
+        if: steps.check.outputs.exists == 'false' && success()
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          VERSION="${{ steps.pkg.outputs.version }}"
+          TAG="${{ steps.pkg.outputs.tag }}"
+          RELEASE_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/tag/${TAG}"
+          NPM_URL="https://www.npmjs.com/package/@vinkius/connect/v/${VERSION}"
+          ACTOR="${GITHUB_ACTOR}"
+
+          PAYLOAD=$(cat <<EOF
+          {
+            "embeds": [{
+              "title": "🚀 @vinkius/connect ${TAG} published to NPM",
+              "url": "$NPM_URL",
+              "color": 3066993,
+              "fields": [
+                { "name": "Version", "value": "\`${VERSION}\`", "inline": true },
+                { "name": "NPM", "value": "[View package](${NPM_URL})", "inline": true },
+                { "name": "Release", "value": "[GitHub](${RELEASE_URL})", "inline": true },
+                { "name": "Triggered by", "value": "$ACTOR", "inline": true }
+              ],
+              "footer": { "text": "Automated from package.json version bump" },
+              "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            }]
+          }
+          EOF
+          )
+
+          curl -s -H "Content-Type: application/json" -d "$PAYLOAD" "$DISCORD_WEBHOOK_URL"

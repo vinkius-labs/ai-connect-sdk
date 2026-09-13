@@ -1,0 +1,89 @@
+name: Deploy Docs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/**"
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: deploy-docs
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Build & Deploy to S3 + CloudFront
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: docs/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: docs
+
+      - name: Build
+        run: npm run build
+        working-directory: docs
+
+      # A CloudFront Function da distribuição reescreve requests de HTML para o
+      # arquivo pré-comprimido .br quando o cliente aceita brotli. Sem esses
+      # arquivos, todo request de HTML dá 404 e cai no fallback /index.html
+      # (SPA custom_error_response) — fazendo TODAS as páginas mostrarem a home.
+      # Portanto geramos os .br aqui, ao lado dos .html originais.
+      - name: Pre-compress HTML with Brotli
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq brotli
+          find docs/dist -type f -name '*.html' -exec brotli -kf {} \;
+          echo "Generated $(find docs/dist -type f -name '*.html.br' | wc -l) brotli files"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_DOCS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_DOCS_REGION }}
+          audience: sts.amazonaws.com
+
+      - name: Sync to S3
+        run: |
+          # Assets estáticos — cache longo (imutáveis via content hash).
+          # Exclui HTML (e seus .br), xml e txt, que precisam revalidar.
+          aws s3 sync docs/dist/ "s3://${{ secrets.AWS_DOCS_BUCKET }}" \
+            --delete \
+            --cache-control "public, max-age=31536000, immutable" \
+            --exclude "*.html" \
+            --exclude "*.html.br" \
+            --exclude "*.xml" \
+            --exclude "*.txt"
+
+          # HTML + HTML pré-comprimido (.br) + xml + txt — sempre revalidar.
+          # CloudFront é invalidado a cada deploy, então o conteúdo fica sempre fresco.
+          aws s3 sync docs/dist/ "s3://${{ secrets.AWS_DOCS_BUCKET }}" \
+            --exclude "*" \
+            --include "*.html" \
+            --include "*.html.br" \
+            --include "*.xml" \
+            --include "*.txt" \
+            --cache-control "public, max-age=0, must-revalidate"
+
+      - name: Invalidate CloudFront (fire and forget)
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "${{ secrets.AWS_DOCS_CF_DISTRIBUTION_ID }}" \
+            --paths "/*" \
+            --no-cli-pager
+          echo "Invalidation submitted — not waiting for completion."

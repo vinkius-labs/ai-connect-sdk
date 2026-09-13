@@ -1,0 +1,69 @@
+name: Changelog → Discord
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - CHANGELOG.md
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    name: Post changelog update to Discord
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Extract changelog diff
+        id: diff
+        run: |
+          # Get only the added lines from CHANGELOG.md in this push
+          ADDED=$(git diff HEAD~1 HEAD -- CHANGELOG.md | grep "^+" | grep -v "^+++" | sed 's/^+//' | head -60)
+
+          if [ -z "$ADDED" ]; then
+            echo "empty=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "empty=false" >> $GITHUB_OUTPUT
+
+          # Write to file to avoid multiline variable issues
+          echo "$ADDED" > /tmp/changelog-diff.txt
+
+      - name: Post to Discord
+        if: steps.diff.outputs.empty == 'false'
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          CONTENT=$(cat /tmp/changelog-diff.txt | head -c 1800)
+          COMMIT_SHA=$(git rev-parse --short HEAD)
+          ACTOR="${GITHUB_ACTOR}"
+          REPO_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}"
+
+          # Escape for JSON
+          ESCAPED=$(echo "$CONTENT" | python3 -c "import sys,json; print(json.dumps(sys.stdin.read()))" | sed 's/^"//;s/"$//')
+
+          PAYLOAD=$(cat <<EOF
+          {
+            "embeds": [{
+              "title": "📋 Changelog updated — @vinkius/connect",
+              "url": "$REPO_URL/blob/main/CHANGELOG.md",
+              "color": 7506394,
+              "description": "```md\n${ESCAPED}\n```",
+              "fields": [
+                { "name": "Commit", "value": "[\`$COMMIT_SHA\`]($REPO_URL/commit/${GITHUB_SHA})", "inline": true },
+                { "name": "Author", "value": "$ACTOR", "inline": true }
+              ],
+              "footer": { "text": "Triggered by push to main" },
+              "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            }]
+          }
+          EOF
+          )
+
+          curl -s -H "Content-Type: application/json" -d "$PAYLOAD" "$DISCORD_WEBHOOK_URL"

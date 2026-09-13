@@ -1,0 +1,13 @@
+# Normalize line endings: store LF in the index and keep LF in working copies
+# on every platform, so Windows checkouts never produce CRLF churn.
+* text=auto eol=lf
+
+# Binary assets — never normalize.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.zip binary
