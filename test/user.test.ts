@@ -13,7 +13,9 @@ describe('UserContext (external_id addressing)', () => {
       {
         method: 'POST',
         path: /^\/apps\/vk_app_test\/users$/,
-        respond: (c) => ({ body: { data: appUser('vk_app_user_1', (c.body as { external_id: string }).external_id) } }),
+        respond: (c) => ({
+          body: { data: appUser('vk_app_user_1', (c.body as { external_id: string }).external_id) },
+        }),
       },
     ]);
     await vinkius.user('usr_42').ensure({ plan: 'pro' });

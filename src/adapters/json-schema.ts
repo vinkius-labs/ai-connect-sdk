@@ -8,7 +8,7 @@
  * `BaseTool` in Python, or feeding a custom agent loop).
  */
 import type { Capability } from '../fluent/capability';
-import type { CapabilityResult, JSONSchema } from '../types';
+import type { CapabilityResult, ExecuteOptions, JSONSchema } from '../types';
 import { findCapability, normalizeParams } from './shared';
 
 export interface JSONSchemaTool {
@@ -31,7 +31,8 @@ export async function executeByName(
   capabilities: readonly Capability[],
   name: string,
   args?: Record<string, unknown>,
+  opts?: ExecuteOptions,
 ): Promise<CapabilityResult> {
   const capability = findCapability(capabilities, name);
-  return capability.execute(args ?? {});
+  return capability.execute(args ?? {}, opts);
 }

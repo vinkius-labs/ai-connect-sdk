@@ -6,7 +6,7 @@
  * structural types compatible with the OpenAI SDK — no import of `openai`.
  */
 import type { Capability } from '../fluent/capability';
-import type { CapabilityResult, JSONSchema } from '../types';
+import type { CapabilityResult, ExecuteOptions, JSONSchema } from '../types';
 import { findCapability, normalizeParams, parseArgs, validateToolName } from './shared';
 
 export interface OpenAIFunctionTool {
@@ -54,7 +54,8 @@ export function toOpenAITools(capabilities: readonly Capability[]): OpenAIFuncti
 export async function runOpenAIToolCall(
   capabilities: readonly Capability[],
   call: OpenAIToolCall,
+  opts?: ExecuteOptions,
 ): Promise<CapabilityResult> {
   const capability = findCapability(capabilities, call.function.name);
-  return capability.execute(parseArgs(call.function.arguments));
+  return capability.execute(parseArgs(call.function.arguments), opts);
 }

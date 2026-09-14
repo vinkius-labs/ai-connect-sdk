@@ -6,7 +6,7 @@
  * `@anthropic-ai/sdk` — no import required.
  */
 import type { Capability } from '../fluent/capability';
-import type { CapabilityResult, JSONSchema } from '../types';
+import type { CapabilityResult, ExecuteOptions, JSONSchema } from '../types';
 import { findCapability, normalizeParams, validateToolName } from './shared';
 
 export interface AnthropicTool {
@@ -45,7 +45,8 @@ export function toAnthropicTools(capabilities: readonly Capability[]): Anthropic
 export async function runAnthropicToolUse(
   capabilities: readonly Capability[],
   use: AnthropicToolUse,
+  opts?: ExecuteOptions,
 ): Promise<CapabilityResult> {
   const capability = findCapability(capabilities, use.name);
-  return capability.execute(use.input ?? {});
+  return capability.execute(use.input ?? {}, opts);
 }

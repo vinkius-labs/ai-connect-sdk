@@ -47,30 +47,46 @@ export class AppUsersClient {
     assertExternalId(input.external_id);
     const body = await this.http.post<unknown>(this.base(), input, {
       idempotent: true,
-      signal: opts.signal, idempotencyKey: opts.idempotencyKey, timeoutMs: opts.timeoutMs,
+      signal: opts.signal,
+      idempotencyKey: opts.idempotencyKey,
+      timeoutMs: opts.timeoutMs,
     });
     return unwrapItem<AppUser>(body);
   }
 
   async get(externalId: string, opts: RequestOptions = {}): Promise<AppUser> {
-    const body = await this.http.get<unknown>(this.userPath(externalId), { signal: opts.signal, idempotencyKey: opts.idempotencyKey, timeoutMs: opts.timeoutMs });
+    const body = await this.http.get<unknown>(this.userPath(externalId), {
+      signal: opts.signal,
+      idempotencyKey: opts.idempotencyKey,
+      timeoutMs: opts.timeoutMs,
+    });
     return unwrapItem<AppUser>(body);
   }
 
   async update(externalId: string, patch: UpdateAppUserInput, opts: RequestOptions = {}): Promise<AppUser> {
-    const body = await this.http.patch<unknown>(this.userPath(externalId), patch, { signal: opts.signal, idempotencyKey: opts.idempotencyKey, timeoutMs: opts.timeoutMs });
+    const body = await this.http.patch<unknown>(this.userPath(externalId), patch, {
+      signal: opts.signal,
+      idempotencyKey: opts.idempotencyKey,
+      timeoutMs: opts.timeoutMs,
+    });
     return unwrapItem<AppUser>(body);
   }
 
   async delete(externalId: string, opts: RequestOptions = {}): Promise<void> {
-    await this.http.delete<unknown>(this.userPath(externalId), { signal: opts.signal, idempotencyKey: opts.idempotencyKey, timeoutMs: opts.timeoutMs });
+    await this.http.delete<unknown>(this.userPath(externalId), {
+      signal: opts.signal,
+      idempotencyKey: opts.idempotencyKey,
+      timeoutMs: opts.timeoutMs,
+    });
   }
 
   /** List users (page-based, supports `?status=`). */
   async list(opts: { status?: string; page?: number } & RequestOptions = {}): Promise<Paginated<AppUser>> {
     const body = await this.http.get<unknown>(this.base(), {
       query: { status: opts.status, page: opts.page },
-      signal: opts.signal, idempotencyKey: opts.idempotencyKey, timeoutMs: opts.timeoutMs,
+      signal: opts.signal,
+      idempotencyKey: opts.idempotencyKey,
+      timeoutMs: opts.timeoutMs,
     });
     return normalizePaginated<AppUser>(body);
   }

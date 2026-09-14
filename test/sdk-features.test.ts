@@ -1,14 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 import { ConfigError } from '../src';
 import type { Vinkius } from '../src';
-import { toOpenAITools } from '../src/adapters/openai';
-import {
-  connection,
-  makeVinkius,
-  runtimeRoute,
-  tokenRoute,
-  type Route,
-} from './helpers/mock-fetch';
+import { runOpenAIToolCall, toOpenAITools } from '../src/adapters/openai';
+import { runAnthropicToolUse } from '../src/adapters/anthropic';
+import { runGeminiFunctionCall } from '../src/adapters/gemini';
+import { executeByName } from '../src/adapters/json-schema';
+import type { Capability } from '../src/fluent/capability';
+import { connection, makeVinkius, runtimeRoute, tokenRoute, type Route } from './helpers/mock-fetch';
 
 function connectionsRoute(connections: Array<Record<string, unknown>>): Route {
   return {
@@ -113,10 +111,68 @@ describe('per-call timeoutMs (ExecuteOptions)', () => {
   });
 });
 
+describe('run* adapters propagate ExecuteOptions to the runtime', () => {
+  async function capabilitiesWithSlowTool(): Promise<readonly Capability[]> {
+    const { vinkius } = makeVinkius([
+      connectionsRoute([connection('conn_1', 'github', { ready: true })]),
+      tokenRoute('conn_1'),
+      runtimeRoute({
+        call: () => ({ content: [{ type: 'text', text: 'slow' }], isError: false }),
+        callDelayMs: 500,
+      }),
+    ]);
+    return vinkius.user('customer-123').capabilities();
+  }
+
+  it('runOpenAIToolCall forwards timeoutMs', async () => {
+    const caps = await capabilitiesWithSlowTool();
+    await expect(
+      runOpenAIToolCall(
+        caps,
+        { function: { name: 'github__create_issue', arguments: '{}' } },
+        { timeoutMs: 30 },
+      ),
+    ).rejects.toMatchObject({ code: 'connection_error' });
+  });
+
+  it('runAnthropicToolUse forwards timeoutMs', async () => {
+    const caps = await capabilitiesWithSlowTool();
+    await expect(
+      runAnthropicToolUse(caps, { name: 'github__create_issue', input: {} }, { timeoutMs: 30 }),
+    ).rejects.toMatchObject({ code: 'connection_error' });
+  });
+
+  it('runGeminiFunctionCall forwards timeoutMs', async () => {
+    const caps = await capabilitiesWithSlowTool();
+    await expect(
+      runGeminiFunctionCall(caps, { name: 'github__create_issue', args: {} }, { timeoutMs: 30 }),
+    ).rejects.toMatchObject({ code: 'connection_error' });
+  });
+
+  it('executeByName forwards timeoutMs', async () => {
+    const caps = await capabilitiesWithSlowTool();
+    await expect(executeByName(caps, 'github__create_issue', {}, { timeoutMs: 30 })).rejects.toMatchObject({
+      code: 'connection_error',
+    });
+  });
+
+  it('executes normally when no ExecuteOptions are given', async () => {
+    const caps = await capabilitiesWithSlowTool();
+    const result = await runOpenAIToolCall(caps, {
+      function: { name: 'github__create_issue', arguments: '{"title":"x"}' },
+    });
+    expect(result.isError).toBe(false);
+  });
+});
+
 describe('OpenAI adapter — function name validation', () => {
   function clientWithNamespace(fn: (c: string, n: string) => string): Vinkius {
     const { vinkius } = makeVinkius(
-      [connectionsRoute([connection('conn_1', 'github', { ready: true })]), tokenRoute('conn_1'), runtimeRoute()],
+      [
+        connectionsRoute([connection('conn_1', 'github', { ready: true })]),
+        tokenRoute('conn_1'),
+        runtimeRoute(),
+      ],
       { namespaceCapability: fn },
     );
     return vinkius;
@@ -201,7 +257,16 @@ describe('auto-pagination iterate()', () => {
           if (page === '1') {
             return {
               body: {
-                data: [{ id: 'u1', external_id: 'a', status: 'active', metadata: null, created_at: 'x', updated_at: 'x' }],
+                data: [
+                  {
+                    id: 'u1',
+                    external_id: 'a',
+                    status: 'active',
+                    metadata: null,
+                    created_at: 'x',
+                    updated_at: 'x',
+                  },
+                ],
                 meta: meta(1, 2),
                 links: {},
               },
@@ -209,7 +274,16 @@ describe('auto-pagination iterate()', () => {
           }
           return {
             body: {
-              data: [{ id: 'u2', external_id: 'b', status: 'active', metadata: null, created_at: 'x', updated_at: 'x' }],
+              data: [
+                {
+                  id: 'u2',
+                  external_id: 'b',
+                  status: 'active',
+                  metadata: null,
+                  created_at: 'x',
+                  updated_at: 'x',
+                },
+              ],
               meta: meta(2, 2),
               links: {},
             },

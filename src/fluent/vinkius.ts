@@ -33,7 +33,9 @@ export class Vinkius {
     const apiKey = options.apiKey;
 
     if (typeof appId !== 'string' || !appId.startsWith('vk_app_') || appId.startsWith('vk_app_sk_')) {
-      throw new ConfigError('`appId` must be a public application id starting with "vk_app_" (not the secret key).');
+      throw new ConfigError(
+        '`appId` must be a public application id starting with "vk_app_" (not the secret key).',
+      );
     }
     if (typeof apiKey !== 'string' || !apiKey.startsWith('vk_app_sk_')) {
       throw new ConfigError('`apiKey` must be a secret application key starting with "vk_app_sk_".');
@@ -109,7 +111,9 @@ function warnIfInsecure(baseUrl: string): void {
     const isLocal =
       host === 'localhost' || host === '127.0.0.1' || host === '[::1]' || host.endsWith('.localhost');
     if (parsed.protocol === 'http:' && !isLocal && typeof console !== 'undefined') {
-      console.warn('[vinkius] baseUrl uses insecure http:// on a non-local host; use https:// in production.');
+      console.warn(
+        '[vinkius] baseUrl uses insecure http:// on a non-local host; use https:// in production.',
+      );
     }
   } catch {
     /* already validated */
@@ -117,8 +121,7 @@ function warnIfInsecure(baseUrl: string): void {
 }
 
 function buildUserAgent(extra?: string): string {
-  const runtime =
-    typeof process !== 'undefined' && process.version ? ` node/${process.version}` : '';
+  const runtime = typeof process !== 'undefined' && process.version ? ` node/${process.version}` : '';
   const base = `vinkius-connect/${VERSION}${runtime}`;
   return extra ? `${base} ${extra}` : base;
 }

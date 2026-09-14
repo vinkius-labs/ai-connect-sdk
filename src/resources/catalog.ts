@@ -56,7 +56,9 @@ export class CatalogClient {
   async list(opts: { page?: number } & RequestOptions = {}): Promise<Paginated<CatalogConnector>> {
     const body = await this.http.get<unknown>('/catalog/mcps', {
       query: { page: opts.page },
-      signal: opts.signal, idempotencyKey: opts.idempotencyKey, timeoutMs: opts.timeoutMs,
+      signal: opts.signal,
+      idempotencyKey: opts.idempotencyKey,
+      timeoutMs: opts.timeoutMs,
     });
     return normalizePaginated<CatalogConnector>(body);
   }
@@ -75,7 +77,9 @@ export class CatalogClient {
   /** Fetch a single connector by slug (or uuid), including its credential schema. */
   async get(slug: string, opts: RequestOptions = {}): Promise<CatalogConnectorDetail> {
     const body = await this.http.get<unknown>(`/catalog/mcps/${encodeURIComponent(slug)}`, {
-      signal: opts.signal, idempotencyKey: opts.idempotencyKey, timeoutMs: opts.timeoutMs,
+      signal: opts.signal,
+      idempotencyKey: opts.idempotencyKey,
+      timeoutMs: opts.timeoutMs,
     });
     return unwrapItem<CatalogConnectorDetail>(body);
   }
@@ -84,7 +88,9 @@ export class CatalogClient {
   async search(query: string, opts: { page?: number } & RequestOptions = {}): Promise<CatalogConnector[]> {
     const body = await this.http.get<unknown>('/marketplace/search', {
       query: { q: query, page: opts.page ?? 1 },
-      signal: opts.signal, idempotencyKey: opts.idempotencyKey, timeoutMs: opts.timeoutMs,
+      signal: opts.signal,
+      idempotencyKey: opts.idempotencyKey,
+      timeoutMs: opts.timeoutMs,
     });
     return normalizeMarketplaceSearch(body);
   }

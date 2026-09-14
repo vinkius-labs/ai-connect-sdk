@@ -9,7 +9,12 @@ export function normalizeParams(schema: JSONSchema): JSONSchema {
   return { type: 'object', properties: {} };
 }
 
-/** Parse a JSON arguments string into an object, tolerating malformed input. */
+/**
+ * Parse a JSON arguments string into an object, tolerating malformed input:
+ * the platform validates tool input, so an unparsable payload executes as an
+ * empty argument set and surfaces as an `isError` tool result the model can
+ * recover from — rather than throwing mid agent-loop.
+ */
 export function parseArgs(raw: string): Record<string, unknown> {
   if (!raw) return {};
   try {
@@ -31,12 +36,7 @@ export function findCapability(capabilities: readonly Capability[], name: string
  * Guard against tool names a platform would reject (length/charset), throwing a
  * clear ConfigError up front instead of a cryptic platform 400 at call time.
  */
-export function validateToolName(
-  name: string,
-  platform: string,
-  pattern: RegExp,
-  maxLength: number,
-): void {
+export function validateToolName(name: string, platform: string, pattern: RegExp, maxLength: number): void {
   if (name.length > maxLength || !pattern.test(name)) {
     throw new ConfigError(
       `Capability "${name}" cannot be exposed as a ${platform} tool name: it must be ` +

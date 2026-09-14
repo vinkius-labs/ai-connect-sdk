@@ -45,7 +45,9 @@ describe('golden path: user.capabilities() → execute (runtime surface)', () =>
     expect(result?.isError).toBe(false);
 
     // Execution hits the runtime with a JSON-RPC tools/call, never the API.
-    const execCall = calls.find((c) => c.path === '/vk_live_test/mcp' && (c.body as { method?: string }).method === 'tools/call');
+    const execCall = calls.find(
+      (c) => c.path === '/vk_live_test/mcp' && (c.body as { method?: string }).method === 'tools/call',
+    );
     expect(execCall?.body).toMatchObject({
       method: 'tools/call',
       params: { name: 'create_issue', arguments: { title: 'Hello Vinkius' } },
@@ -121,7 +123,11 @@ describe('golden path: user.capabilities() → execute (runtime surface)', () =>
   it('emits redacted hooks for runtime traffic (vk_live token masked in the URL)', async () => {
     const urls: string[] = [];
     const { vinkius } = makeVinkius(
-      [connectionsRoute([connection('conn_1', 'github', { ready: true })]), tokenRoute('conn_1'), runtimeRoute()],
+      [
+        connectionsRoute([connection('conn_1', 'github', { ready: true })]),
+        tokenRoute('conn_1'),
+        runtimeRoute(),
+      ],
       {
         hooks: {
           onRequest: (info) => urls.push(info.url),

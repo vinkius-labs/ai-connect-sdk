@@ -72,7 +72,11 @@ export class HttpClient {
     return this.request<T>({ ...req, method: 'PUT', path, body });
   }
 
-  patch<T>(path: string, body?: unknown, req: Omit<HttpRequest, 'method' | 'path' | 'body'> = {}): Promise<T> {
+  patch<T>(
+    path: string,
+    body?: unknown,
+    req: Omit<HttpRequest, 'method' | 'path' | 'body'> = {},
+  ): Promise<T> {
     return this.request<T>({ ...req, method: 'PATCH', path, body });
   }
 
@@ -83,8 +87,7 @@ export class HttpClient {
   async request<T>(req: HttpRequest): Promise<T> {
     const url = this.buildUrl(req.path, req.query);
     const headers = this.buildHeaders(req);
-    const retryable =
-      (req.idempotent ?? isIdempotentMethod(req.method)) || req.idempotencyKey !== undefined;
+    const retryable = (req.idempotent ?? isIdempotentMethod(req.method)) || req.idempotencyKey !== undefined;
 
     const result = await this.transport.send({
       url,

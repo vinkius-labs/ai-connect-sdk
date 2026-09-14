@@ -26,10 +26,7 @@ export interface ToLangChainOptions<T> {
 }
 
 /** Convert Vinkius capabilities to LangChain tools using the injected `tool` factory. */
-export function toLangChainTools<T>(
-  capabilities: readonly Capability[],
-  opts: ToLangChainOptions<T>,
-): T[] {
+export function toLangChainTools<T>(capabilities: readonly Capability[], opts: ToLangChainOptions<T>): T[] {
   return capabilities.map((capability) =>
     opts.tool(
       async (input: Record<string, unknown>): Promise<string> => {

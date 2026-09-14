@@ -36,11 +36,19 @@ export class CredentialsClient {
 
   /** Which credential keys are configured (never the values). */
   status(opts: RequestOptions = {}): Promise<CredentialStatus> {
-    return this.http.get<CredentialStatus>(this.base(), { signal: opts.signal, idempotencyKey: opts.idempotencyKey, timeoutMs: opts.timeoutMs });
+    return this.http.get<CredentialStatus>(this.base(), {
+      signal: opts.signal,
+      idempotencyKey: opts.idempotencyKey,
+      timeoutMs: opts.timeoutMs,
+    });
   }
 
   /** Store credentials, validated server-side against the connector schema. */
   set(input: SetCredentialsInput, opts: RequestOptions = {}): Promise<CredentialStatus> {
-    return this.http.put<CredentialStatus>(this.base(), input, { signal: opts.signal, idempotencyKey: opts.idempotencyKey, timeoutMs: opts.timeoutMs });
+    return this.http.put<CredentialStatus>(this.base(), input, {
+      signal: opts.signal,
+      idempotencyKey: opts.idempotencyKey,
+      timeoutMs: opts.timeoutMs,
+    });
   }
 }

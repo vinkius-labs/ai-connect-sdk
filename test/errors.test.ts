@@ -1,12 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  AuthError,
-  NotFoundError,
-  OverageError,
-  QuotaError,
-  RateLimitError,
-  ValidationError,
-} from '../src';
+import { AuthError, NotFoundError, OverageError, QuotaError, RateLimitError, ValidationError } from '../src';
 import { makeVinkius, type Route } from './helpers/mock-fetch';
 
 function getUserWith(status: number, body: unknown, headers?: Record<string, string>): Route {
@@ -45,7 +38,11 @@ describe('error mapping', () => {
 
   it('maps 429 MCP-shaped bodies to QuotaError with upgradeUrl', async () => {
     const { vinkius } = makeVinkius([
-      getUserWith(429, { content: [{ type: 'text', text: 'quota' }], isError: true, upgrade_url: 'https://u' }),
+      getUserWith(429, {
+        content: [{ type: 'text', text: 'quota' }],
+        isError: true,
+        upgrade_url: 'https://u',
+      }),
     ]);
     const error = await vinkius.users.get('someuser').catch((e: unknown) => e);
     expect(error).toBeInstanceOf(QuotaError);

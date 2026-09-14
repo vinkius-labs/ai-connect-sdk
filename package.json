@@ -1,6 +1,6 @@
 {
   "name": "@vinkius/connect",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "description": "Ship AI features, not integration projects. Give every user of your AI app their own connectors and AI capabilities.",
   "license": "Apache-2.0",
   "author": "Vinkius",

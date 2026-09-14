@@ -16,12 +16,7 @@
  *    ProtocolError. Tool-level failures are returned as `{ isError: true }`.
  *  - Redacted observability hooks (the `vk_live_*` path segment is masked).
  */
-import {
-  AuthError,
-  NotFoundError,
-  ProtocolError,
-  VinkiusError,
-} from './errors';
+import { AuthError, NotFoundError, ProtocolError, VinkiusError } from './errors';
 import type { RetryPolicy } from './retry';
 import { Transport, type FetchLike } from './transport';
 import type { CapabilityData, CapabilityResult, Hooks } from '../types';

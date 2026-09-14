@@ -157,7 +157,10 @@ export class Transport {
 }
 
 /** Combine the per-request timeout with an optional caller signal. */
-function composeSignal(caller: AbortSignal | undefined, timeoutMs: number): {
+function composeSignal(
+  caller: AbortSignal | undefined,
+  timeoutMs: number,
+): {
   signal: AbortSignal;
   cleanup: () => void;
 } {
@@ -198,10 +201,7 @@ function raceWithTimeout(response: Response, timeoutMs: number): Promise<string>
       reject(new DOMException('Timeout', 'AbortError'));
     }, timeoutMs);
   });
-  return Promise.race([
-    response.text().finally(() => clearTimeout(timer)),
-    deadline,
-  ]);
+  return Promise.race([response.text().finally(() => clearTimeout(timer)), deadline]);
 }
 
 function parseBody(text: string): unknown {

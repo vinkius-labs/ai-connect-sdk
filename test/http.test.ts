@@ -24,7 +24,9 @@ describe('HttpClient behavior', () => {
       path: /^\/apps\/vk_app_test\/users\/someuser$/,
       respond: () => {
         attempts += 1;
-        return attempts < 2 ? { status: 503, body: { message: 'unavailable' } } : { body: { data: { id: 'x' } } };
+        return attempts < 2
+          ? { status: 503, body: { message: 'unavailable' } }
+          : { body: { data: { id: 'x' } } };
       },
     };
     const { vinkius } = makeVinkius([route], { maxRetries: 2 });
@@ -124,8 +126,8 @@ describe('HttpClient behavior', () => {
 
 describe('adapter dispatch', () => {
   it('throws a typed NotFoundError for an unknown capability', async () => {
-    await expect(runOpenAIToolCall([], { function: { name: 'nope', arguments: '{}' } })).rejects.toBeInstanceOf(
-      NotFoundError,
-    );
+    await expect(
+      runOpenAIToolCall([], { function: { name: 'nope', arguments: '{}' } }),
+    ).rejects.toBeInstanceOf(NotFoundError);
   });
 });

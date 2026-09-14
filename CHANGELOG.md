@@ -4,6 +4,24 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] — 2026-09-14
+
+### Added
+
+- `runOpenAIToolCall`, `runAnthropicToolUse`, `runGeminiFunctionCall` and the
+  neutral `executeByName` now accept an optional `ExecuteOptions` argument
+  (`signal`, `idempotencyKey`, `timeoutMs`) and forward it to the runtime.
+  Backward compatible — the argument is optional and defaults to the SDK
+  configuration. Adapters whose execute callback is owned by the framework
+  (`ai-sdk`, `langchain`, `llamaindex`, `openai-agents`, `workers-ai`) are
+  unchanged.
+
+### Fixed
+
+- Source tree now passes `prettier --check` (the previous release was not
+  canonically formatted) and `package-lock.json` records the correct
+  `Apache-2.0` license.
+
 ## [0.1.3] — 2026-08-17
 
 ### Fixed

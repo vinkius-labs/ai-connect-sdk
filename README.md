@@ -241,17 +241,17 @@ Adapters are zero-dependency subpath exports that convert capabilities into your
 framework's **tool** format (each framework's own term). Where a framework needs one
 of its own factories, you inject it — no peer dependency, no version coupling.
 
-| Framework                        | Import                           | Notes                                    |
-| -------------------------------- | -------------------------------- | ---------------------------------------- |
-| OpenAI (chat completions)        | `@vinkius/connect/openai`        | `toOpenAITools`, `runOpenAIToolCall`     |
-| OpenAI Agents (`@openai/agents`) | `@vinkius/connect/openai-agents` | `toOpenAIAgentsTools` (inject `tool`)    |
+| Framework                        | Import                           | Notes                                     |
+| -------------------------------- | -------------------------------- | ----------------------------------------- |
+| OpenAI (chat completions)        | `@vinkius/connect/openai`        | `toOpenAITools`, `runOpenAIToolCall`      |
+| OpenAI Agents (`@openai/agents`) | `@vinkius/connect/openai-agents` | `toOpenAIAgentsTools` (inject `tool`)     |
 | Anthropic (Messages)             | `@vinkius/connect/anthropic`     | `toAnthropicTools`, `runAnthropicToolUse` |
-| Google Gemini                    | `@vinkius/connect/gemini`        | `toGeminiTools`, `runGeminiFunctionCall` |
-| Vercel AI SDK                    | `@vinkius/connect/ai-sdk`        | `toAISDKTools` (inject `jsonSchema`)     |
-| LangChain.js                     | `@vinkius/connect/langchain`     | `toLangChainTools` (inject `tool`)       |
-| LlamaIndex.TS                    | `@vinkius/connect/llamaindex`    | `toLlamaIndexTools` (inject `tool`)      |
-| Cloudflare Workers AI            | `@vinkius/connect/workers-ai`    | `toWorkersAITools` (for `runWithTools`)  |
-| Any / neutral                    | `@vinkius/connect/json-schema`   | `toJSONSchemaTools`, `executeByName`     |
+| Google Gemini                    | `@vinkius/connect/gemini`        | `toGeminiTools`, `runGeminiFunctionCall`  |
+| Vercel AI SDK                    | `@vinkius/connect/ai-sdk`        | `toAISDKTools` (inject `jsonSchema`)      |
+| LangChain.js                     | `@vinkius/connect/langchain`     | `toLangChainTools` (inject `tool`)        |
+| LlamaIndex.TS                    | `@vinkius/connect/llamaindex`    | `toLlamaIndexTools` (inject `tool`)       |
+| Cloudflare Workers AI            | `@vinkius/connect/workers-ai`    | `toWorkersAITools` (for `runWithTools`)   |
+| Any / neutral                    | `@vinkius/connect/json-schema`   | `toJSONSchemaTools`, `executeByName`      |
 
 ### OpenAI (chat completions)
 

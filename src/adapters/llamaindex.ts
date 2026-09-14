@@ -25,10 +25,7 @@ export interface ToLlamaIndexOptions<T> {
 }
 
 /** Convert Vinkius capabilities to LlamaIndex.TS tools using the injected `tool` factory. */
-export function toLlamaIndexTools<T>(
-  capabilities: readonly Capability[],
-  opts: ToLlamaIndexOptions<T>,
-): T[] {
+export function toLlamaIndexTools<T>(capabilities: readonly Capability[], opts: ToLlamaIndexOptions<T>): T[] {
   return capabilities.map((capability) =>
     opts.tool(
       async (input: Record<string, unknown>): Promise<string> => {

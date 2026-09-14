@@ -210,7 +210,11 @@ export function runtimeRoute(
     method: 'POST',
     path: RUNTIME_MCP_PATH,
     respond: (c) => {
-      const rpc = c.body as { id?: unknown; method?: string; params?: { name?: string; arguments?: unknown } };
+      const rpc = c.body as {
+        id?: unknown;
+        method?: string;
+        params?: { name?: string; arguments?: unknown };
+      };
       if (rpc.method === 'tools/list') {
         return { body: { jsonrpc: '2.0', id: rpc.id, result: { tools: handlers.tools ?? [runtimeTool()] } } };
       }

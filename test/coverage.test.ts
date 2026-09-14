@@ -14,14 +14,7 @@ import { runAnthropicToolUse, toAnthropicTools } from '../src/adapters/anthropic
 import { runOpenAIToolCall, toOpenAITools } from '../src/adapters/openai';
 import { toGeminiTools } from '../src/adapters/gemini';
 import { sleep } from '../src/core/retry';
-import {
-  appUser,
-  connection,
-  makeVinkius,
-  runtimeRoute,
-  tokenRoute,
-  type Route,
-} from './helpers/mock-fetch';
+import { appUser, connection, makeVinkius, runtimeRoute, tokenRoute, type Route } from './helpers/mock-fetch';
 
 function connectionsRoute(connections: Array<Record<string, unknown>>): Route {
   return {
@@ -83,7 +76,10 @@ describe('config validation (gaps)', () => {
 // ── Capability building guards ──────────────────────────────────────────────
 
 describe('buildCapability guards', () => {
-  const executor = async (): Promise<{ content: Array<{ type: string; text: string }>; isError: boolean }> => ({
+  const executor = async (): Promise<{
+    content: Array<{ type: string; text: string }>;
+    isError: boolean;
+  }> => ({
     content: [],
     isError: false,
   });
@@ -146,7 +142,9 @@ describe('resource clients (update/delete/get/credentials)', () => {
         respond: () => ({ body: {} }),
       },
     ]);
-    await expect(vinkius.users.connections('customer-123').get('conn_9')).resolves.toMatchObject({ id: 'conn_9' });
+    await expect(vinkius.users.connections('customer-123').get('conn_9')).resolves.toMatchObject({
+      id: 'conn_9',
+    });
     await expect(vinkius.users.connections('customer-123').delete('conn_9')).resolves.toBeUndefined();
     expect(calls.map((c) => c.method)).toEqual(['GET', 'DELETE']);
   });
@@ -157,7 +155,9 @@ describe('resource clients (update/delete/get/credentials)', () => {
       {
         method: 'GET',
         path: /^\/apps\/vk_app_test\/users\/customer-123\/mcps\/conn_1\/credentials$/,
-        respond: () => ({ body: { schema: { api_key: { type: 'api_key' } }, configured: { api_key: true } } }),
+        respond: () => ({
+          body: { schema: { api_key: { type: 'api_key' } }, configured: { api_key: true } },
+        }),
       },
       {
         method: 'PUT',
@@ -177,7 +177,9 @@ describe('resource clients (update/delete/get/credentials)', () => {
       {
         method: 'POST',
         path: /^\/apps\/vk_app_test\/users\/customer-123\/mcps\/conn_1\/tokens$/,
-        respond: () => ({ body: { data: { id: 'tok_1', name: 'agent', is_enabled: true, created_at: 'x' } } }),
+        respond: () => ({
+          body: { data: { id: 'tok_1', name: 'agent', is_enabled: true, created_at: 'x' } },
+        }),
       },
     ]);
     const issued = await vinkius.users.connections('customer-123').tokens('conn_1').issue({ name: 'agent' });
@@ -233,7 +235,11 @@ describe('connector handle (disconnect, memoization, bad mint)', () => {
   it('disconnects by deleting the resolved connection', async () => {
     const { vinkius, calls } = makeVinkius([
       connectionsRoute([connection('conn_1', 'github', { ready: true })]),
-      { method: 'DELETE', path: /^\/apps\/vk_app_test\/users\/customer-123\/mcps\/conn_1$/, respond: () => ({ body: {} }) },
+      {
+        method: 'DELETE',
+        path: /^\/apps\/vk_app_test\/users\/customer-123\/mcps\/conn_1$/,
+        respond: () => ({ body: {} }),
+      },
     ]);
     await vinkius.user('customer-123').connector('github').disconnect();
     expect(calls.some((c) => c.method === 'DELETE' && c.path.endsWith('/mcps/conn_1'))).toBe(true);
@@ -279,9 +285,9 @@ describe('adapters (gaps)', () => {
   });
 
   it('validates tool names for Gemini (no hyphens) and Anthropic (≤128)', async () => {
-    await expect(getCapabilities({ namespaceCapability: (c, n) => `${c}-${n}` }).then(toGeminiTools)).rejects.toBeInstanceOf(
-      ConfigError,
-    );
+    await expect(
+      getCapabilities({ namespaceCapability: (c, n) => `${c}-${n}` }).then(toGeminiTools),
+    ).rejects.toBeInstanceOf(ConfigError);
     await expect(
       getCapabilities({ namespaceCapability: () => 'y'.repeat(129) }).then(toAnthropicTools),
     ).rejects.toBeInstanceOf(ConfigError);

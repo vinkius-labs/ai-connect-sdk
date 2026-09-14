@@ -74,10 +74,7 @@ export class UserContext {
 
     const summaries = await this.connectors(reqOpts);
     const targets = summaries.filter(
-      (s) =>
-        s.status === 'ready' &&
-        (!include || include.has(s.slug)) &&
-        (!exclude || !exclude.has(s.slug)),
+      (s) => s.status === 'ready' && (!include || include.has(s.slug)) && (!exclude || !exclude.has(s.slug)),
     );
 
     // Failure-tolerant, concurrency-limited fan-out: one flaky runtime must not
@@ -85,18 +82,22 @@ export class UserContext {
     // not open N simultaneous sockets.
     const MAX_FANOUT_CONCURRENCY = 8;
     let firstError: unknown;
-    const settled = await pooledMap(targets, MAX_FANOUT_CONCURRENCY, async (s): Promise<CapabilitySet | null> => {
-      try {
-        return s.connectionId !== undefined
-          ? await this.connector(s.slug).capabilitiesForConnection(s.connectionId, reqOpts)
-          : await this.connector(s.slug).capabilities(reqOpts);
-      } catch (error) {
-        firstError ??= error; // isolated failure — never sinks the batch
-        // Surface the partial failure to the caller if they asked to observe it.
-        opts.onConnectorError?.(s.slug, error);
-        return null;
-      }
-    });
+    const settled = await pooledMap(
+      targets,
+      MAX_FANOUT_CONCURRENCY,
+      async (s): Promise<CapabilitySet | null> => {
+        try {
+          return s.connectionId !== undefined
+            ? await this.connector(s.slug).capabilitiesForConnection(s.connectionId, reqOpts)
+            : await this.connector(s.slug).capabilities(reqOpts);
+        } catch (error) {
+          firstError ??= error; // isolated failure — never sinks the batch
+          // Surface the partial failure to the caller if they asked to observe it.
+          opts.onConnectorError?.(s.slug, error);
+          return null;
+        }
+      },
+    );
 
     const failures = settled.filter((set) => set === null).length;
     if (failures > 0 && failures === targets.length) {

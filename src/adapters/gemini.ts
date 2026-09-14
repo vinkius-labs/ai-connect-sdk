@@ -13,7 +13,7 @@
  * });
  */
 import type { Capability } from '../fluent/capability';
-import type { CapabilityResult, JSONSchema } from '../types';
+import type { CapabilityResult, ExecuteOptions, JSONSchema } from '../types';
 import { findCapability, normalizeParams, validateToolName } from './shared';
 
 export interface GeminiFunctionDeclaration {
@@ -57,7 +57,8 @@ export function toGeminiTools(capabilities: readonly Capability[]): GeminiFuncti
 export async function runGeminiFunctionCall(
   capabilities: readonly Capability[],
   call: GeminiFunctionCall,
+  opts?: ExecuteOptions,
 ): Promise<CapabilityResult> {
   const capability = findCapability(capabilities, call.name);
-  return capability.execute(call.args ?? {});
+  return capability.execute(call.args ?? {}, opts);
 }
